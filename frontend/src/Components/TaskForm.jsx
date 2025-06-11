@@ -9,7 +9,7 @@ export default function TaskForm({ onAdd }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    await onAdd({ title, description });
+    await onAdd({ title, description, category, due_date: dueDate });
     setTitle("");
     setDescription("");
     setLoading(false);
@@ -20,7 +20,7 @@ export default function TaskForm({ onAdd }) {
       <h2 className="text-2xl font-bold text-gray-800 mb-4">Add New Task</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
-            <p>Enter the title of the task:</p>
+          <p>Enter the title of the task:</p>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -30,7 +30,7 @@ export default function TaskForm({ onAdd }) {
           />
         </div>
         <div className="mb-4">
-            <p>Enter the Description of the task: </p>
+          <p>Enter the Description of the task: </p>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}

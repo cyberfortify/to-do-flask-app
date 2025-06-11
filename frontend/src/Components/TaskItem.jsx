@@ -39,7 +39,7 @@ export default function TaskItem({ task, setTasks, fetchTasks }) {
       alert("Task title cannot be empty.");
       return;
     }
-  
+
     // Optimistically update UI
     setTasks((prevTasks) =>
       prevTasks.map((t) =>
@@ -48,19 +48,18 @@ export default function TaskItem({ task, setTasks, fetchTasks }) {
           : t
       )
     );
-  
+
     setIsEditing(false); // Hide input immediately
-  
+
     // API call runs in background
     await api.put(`/tasks/${task.id}`, {
       title: editedTitle,
       description: editedDescription,
       completed: task.completed,
     });
-  
+
     fetchTasks(); // Final sync with DB (optional but recommended)
   };
-  
 
   return (
     <div className="card mb-3">
