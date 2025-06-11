@@ -18,64 +18,54 @@ export default function TaskForm({ onAdd }) {
   return (
     <div className="d-flex flex-column justify-content-center align-items-center bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-6">
       <h2 className="text-2xl font-bold text-gray-800 mb-4">Add New Task</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <p>Enter the title of the task:</p>
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Task title*"
-            required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-          />
-        </div>
-        <div className="mb-4">
-          <p>Enter the Description of the task: </p>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Description (optional)"
-            rows="3"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center shadow"
-        >
-          {loading ? (
-            <>
-              <svg
-                className="animate-spin -ml-1 mr-2 h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-              Adding...
-            </>
-          ) : (
-            <>
-              <PlusCircleIcon className="w-5 h-5 mr-2" />
-              Add Task
-            </>
-          )}
-        </button>
-      </form>
+      <form onSubmit={handleSubmit} className="d-grid gap-3">
+      <div className="mb-3">
+        <label htmlFor="taskTitle" className="form-label fw-semibold">
+          Task Title <span className="text-danger">*</span>
+        </label>
+        <input
+          id="taskTitle"
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="form-control form-control-lg shadow-sm"
+          placeholder="e.g., Buy groceries"
+          required
+        />
+      </div>
+
+      <div className="mb-3">
+        <label htmlFor="taskDescription" className="form-label fw-semibold">
+          Description <small className="text-muted">(optional)</small>
+        </label>
+        <textarea
+          id="taskDescription"
+          rows="3"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="form-control shadow-sm"
+          placeholder="Add more details about this task"
+        ></textarea>
+      </div>
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="btn btn-primary btn-lg w-100 d-flex align-items-center justify-content-center gap-2"
+      >
+        {loading ? (
+          <>
+            <div className="spinner-border spinner-border-sm" role="status"></div>
+            Adding...
+          </>
+        ) : (
+          <>
+            <PlusCircleIcon className="me-2" style={{ width: "1.25rem", height: "1.25rem" }} />
+            Add Task
+          </>
+        )}
+      </button>
+    </form>
     </div>
   );
 }
