@@ -9,7 +9,7 @@ export default function TaskForm({ onAdd }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    await onAdd({ title, description, category, due_date: dueDate });
+    await onAdd({ title, description });
     setTitle("");
     setDescription("");
     setLoading(false);
