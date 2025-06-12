@@ -29,18 +29,28 @@ function App() {
   }, []);
 
   const handleAddTask = async (newTask) => {
-    const tempId = Date.now();
-    setTasks((prev) => [...prev, { ...newTask, id: tempId, completed: false }]);
-
+    const tempId = Date.now(); // ✅ temporary ID for UI only
+  
+    // ✅ Optimistic UI update → Add task immediately to the UI
+    setTasks((prevTasks) => [
+      ...prevTasks,
+      { ...newTask, id: tempId, completed: false },
+    ]);
+  
     try {
       const res = await api.post("/tasks", newTask);
-      setTasks((prev) => prev.map((t) => (t.id === tempId ? res.data : t)));
+  
+      // ✅ Replace temp task with server response (if you get it back)
+      fetchTasks();  // Fresh from server
     } catch (err) {
       console.error(err);
-      setTasks((prev) => prev.filter((t) => t.id !== tempId));
       setError("Failed to add task");
+  
+      // ❗ Remove the optimistic task on failure
+      setTasks((prevTasks) => prevTasks.filter((t) => t.id !== tempId));
     }
   };
+  
 
   const completedTasks = tasks.filter((t) => t.completed).length;
   const pendingTasks = tasks.length - completedTasks;
