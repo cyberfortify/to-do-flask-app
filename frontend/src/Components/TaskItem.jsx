@@ -1,28 +1,28 @@
 import { useState } from "react";
-import api from "../api";
+import { motion, AnimatePresence } from "framer-motion";
 
-export default function TaskItem({ task, setTasks }) {
+export default function TaskItem({ task, onUpdate, onDelete }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(task.title);
   const [editedDescription, setEditedDescription] = useState(task.description);
 
   const handleToggleComplete = async () => {
-    const updatedTask = {
-      ...task,
-      completed: !task.completed,
-    };
-
-    // Optimistic UI
-    setTasks((prevTasks) =>
-      prevTasks.map((t) => (t.id === task.id ? updatedTask : t))
-    );
-
-    await api.put(`/tasks/${task.id}`, updatedTask);
+    try {
+      await onUpdate(task.id, {
+        ...task,
+        completed: !task.completed,
+      });
+    } catch (error) {
+      console.error("Error toggling task completion:", error);
+    }
   };
 
   const handleDeleteTask = async () => {
-    setTasks((prevTasks) => prevTasks.filter((t) => t.id !== task.id));
-    await api.delete(`/tasks/${task.id}`);
+    try {
+      await onDelete(task.id);
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
   };
 
   const handleSaveEdit = async () => {
@@ -31,84 +31,123 @@ export default function TaskItem({ task, setTasks }) {
       return;
     }
 
-    const updatedTask = {
-      ...task,
-      title: editedTitle,
-      description: editedDescription,
-    };
-
-    setTasks((prevTasks) =>
-      prevTasks.map((t) => (t.id === task.id ? updatedTask : t))
-    );
-
-    setIsEditing(false);
-    await api.put(`/tasks/${task.id}`, updatedTask);
+    try {
+      await onUpdate(task.id, {
+        ...task,
+        title: editedTitle,
+        description: editedDescription,
+      });
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error updating task:", error);
+    }
   };
 
   return (
-    <div className="card mb-3 shadow-sm">
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="card mb-3 shadow-sm"
+      whileHover={{ scale: 1.01 }}
+      transition={{ duration: 0.2 }}
+    >
       <div className="card-body">
-        {isEditing ? (
-          <>
-            <input
-              className="form-control mb-2"
-              value={editedTitle}
-              onChange={(e) => setEditedTitle(e.target.value)}
-            />
-            <textarea
-              className="form-control mb-2"
-              value={editedDescription}
-              onChange={(e) => setEditedDescription(e.target.value)}
-              rows="2"
-            />
-            <div className="d-flex gap-2">
-              <button onClick={handleSaveEdit} className="btn btn-success btn-sm">
-                Save
-              </button>
-              <button
-                onClick={() => setIsEditing(false)}
-                className="btn btn-secondary btn-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <h5
-              className={`card-title mb-1 ${
-                task.completed ? "text-decoration-line-through text-muted" : ""
-              }`}
+        <AnimatePresence mode="wait">
+          {isEditing ? (
+            <motion.div
+              key="edit"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
             >
-              {task.title}
-            </h5>
-            <p className="card-text text-muted small mb-3">{task.description}</p>
-
-            <div className="d-flex flex-wrap gap-2">
-              <button
-                onClick={() => setIsEditing(true)}
-                className="btn btn-warning btn-sm"
-              >
-                Edit
-              </button>
-              <button
-                onClick={handleToggleComplete}
-                className={`btn btn-sm ${
-                  task.completed ? "btn-secondary" : "btn-success"
+              <input
+                className="input mb-2"
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                placeholder="Task title"
+              />
+              <textarea
+                className="input mb-2"
+                value={editedDescription}
+                onChange={(e) => setEditedDescription(e.target.value)}
+                rows="2"
+                placeholder="Task description"
+              />
+              <div className="d-flex gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleSaveEdit}
+                  className="btn btn-primary"
+                >
+                  Save
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsEditing(false)}
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </motion.button>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="view"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+            >
+              <motion.h5
+                className={`card-title mb-1 ${
+                  task.completed ? "text-decoration-line-through text-muted" : ""
                 }`}
+                layout
               >
-                {task.completed ? "Mark Incomplete" : "Mark Complete"}
-              </button>
-              <button
-                onClick={handleDeleteTask}
-                className="btn btn-danger btn-sm"
+                {task.title}
+              </motion.h5>
+              <motion.p
+                className="card-text text-muted small mb-3"
+                layout
               >
-                Delete
-              </button>
-            </div>
-          </>
-        )}
+                {task.description}
+              </motion.p>
+
+              <div className="d-flex flex-wrap gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsEditing(true)}
+                  className="btn btn-warning"
+                >
+                  Edit
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleToggleComplete}
+                  className={`btn ${
+                    task.completed ? "btn-secondary" : "btn-success"
+                  }`}
+                >
+                  {task.completed ? "Mark Incomplete" : "Mark Complete"}
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleDeleteTask}
+                  className="btn btn-danger"
+                >
+                  Delete
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 }

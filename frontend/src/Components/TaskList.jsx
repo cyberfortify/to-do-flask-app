@@ -1,14 +1,14 @@
 import TaskItem from './TaskItem';
 
-export default function TaskList({ tasks, setTasks, fetchTasks }) {
+export default function TaskList({ tasks, onUpdate, onDelete }) {
   return (
     <div className="space-y-4">
       {tasks.map((task) => (
         <TaskItem
           key={task.id}
           task={task}
-          setTasks={setTasks}
-          fetchTasks={fetchTasks}  // ✅ PASS fetchTasks here!
+          onUpdate={onUpdate}
+          onDelete={onDelete}
         />
       ))}
     </div>

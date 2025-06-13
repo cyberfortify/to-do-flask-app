@@ -1,116 +1,148 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import Login from "./components/Auth/Login";
+import Register from "./components/Auth/Signup";
+import Dashboard from "./components/Dashboard";
 import api from "./api";
-import TaskForm from "./components/TaskForm";
-import TaskList from "./components/TaskList";
-import Header from "./components/Header";
-import StatsCard from "./components/StatsCard";
 
 function App() {
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState(null);
+  const [tasks, setTasks] = useState([]);
+
+  useEffect(() => {
+    // Check if user is authenticated
+    const token = localStorage.getItem('token');
+    if (token) {
+      setIsAuthenticated(true);
+      fetchTasks();
+    }
+  }, []);
 
   const fetchTasks = async () => {
     try {
-      setLoading(true);
-      const res = await api.get("/tasks");
-      setTasks(res.data);
+      const response = await api.get('/api/tasks');
+      setTasks(response.data);
       setError(null);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load tasks. Please try again later.");
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      setError(error.response?.data?.error || 'Failed to fetch tasks');
     }
   };
-
-  useEffect(() => {
-    fetchTasks();
-  }, []);
 
   const handleAddTask = async (newTask) => {
-    const tempId = Date.now(); // ✅ temporary ID for UI only
-  
-    // ✅ Optimistic UI update → Add task immediately to the UI
-    setTasks((prevTasks) => [
-      ...prevTasks,
-      { ...newTask, id: tempId, completed: false },
-    ]);
-  
     try {
-      const res = await api.post("/tasks", newTask);
-  
-      // ✅ Replace temp task with server response (if you get it back)
-      fetchTasks();  // Fresh from server
-    } catch (err) {
-      console.error(err);
-      setError("Failed to add task");
-  
-      // ❗ Remove the optimistic task on failure
-      setTasks((prevTasks) => prevTasks.filter((t) => t.id !== tempId));
+      const response = await api.post('/api/tasks', newTask);
+      setTasks(prevTasks => [...prevTasks, response.data]);
+      setError(null);
+    } catch (error) {
+      console.error('Error adding task:', error);
+      setError(error.response?.data?.error || 'Failed to add task');
     }
   };
-  
 
-  const completedTasks = tasks.filter((t) => t.completed).length;
-  const pendingTasks = tasks.length - completedTasks;
+  const handleUpdateTask = async (taskId, updatedTask) => {
+    try {
+      const response = await api.put(`/api/tasks/${taskId}`, updatedTask);
+      setTasks(prevTasks => 
+        prevTasks.map(task => 
+          task.id === taskId ? response.data : task
+        )
+      );
+      setError(null);
+    } catch (error) {
+      console.error('Error updating task:', error);
+      setError(error.response?.data?.error || 'Failed to update task');
+    }
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    try {
+      await api.delete(`/api/tasks/${taskId}`);
+      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+      setError(null);
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      setError(error.response?.data?.error || 'Failed to delete task');
+    }
+  };
+
+  const handleLogin = async (credentials) => {
+    try {
+      const response = await api.post('/api/auth/login', credentials);
+      const { token } = response.data;
+      localStorage.setItem('token', token);
+      setIsAuthenticated(true);
+      setError(null);
+      fetchTasks(); // Fetch tasks after successful login
+    } catch (error) {
+      console.error('Login error:', error);
+      setError(error.response?.data?.error || 'Login failed');
+    }
+  };
+
+  const handleRegister = async (userData) => {
+    try {
+      const response = await api.post('/api/auth/signup', userData);
+      const { token } = response.data;
+      localStorage.setItem('token', token);
+      setIsAuthenticated(true);
+      setError(null);
+      fetchTasks(); // Fetch tasks after successful registration
+    } catch (error) {
+      console.error('Registration error:', error);
+      setError(error.response?.data?.error || 'Registration failed');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setIsAuthenticated(false);
+    setTasks([]); // Clear tasks on logout
+  };
 
   return (
-    <div className="bg-light min-vh-100">
-      <Header />
-
-      <div className="container py-5">
-        <StatsCard
-          total={tasks.length}
-          completed={completedTasks}
-          pending={pendingTasks}
+    <div className="min-h-screen bg-gray-100">
+      <Routes>
+        <Route 
+          path="/login" 
+          element={
+            !isAuthenticated ? (
+              <Login onLogin={handleLogin} error={error} />
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          } 
         />
-
-        {/* ✅ Proper Bootstrap 2-column layout */}
-        <div className="row mt-4 g-4">
-          {/* Left: Task Form */}
-          <div className="col-md-8">
-            <div className="card shadow">
-              <div className="card-body">
-                <h2 className="h4 mb-4">Add New Task</h2>
-                <TaskForm onAdd={handleAddTask} />
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Task List */}
-          <div className="col-md-4">
-            <div className="card shadow">
-              <div className="card-body">
-                <h2 className="h4 mb-3">Your Tasks</h2>
-
-                {error && <div className="alert alert-danger">{error}</div>}
-
-                {loading ? (
-                  <div className="d-flex justify-content-center py-4">
-                    <div
-                      className="spinner-border text-primary"
-                      role="status"
-                    ></div>
-                  </div>
-                ) : (
-                  <div style={{ maxHeight: "500px", overflowY: "auto" }}>
-                    <TaskList
-                      tasks={tasks}
-                      setTasks={setTasks}
-                      fetchTasks={fetchTasks}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <footer className="text-center py-4 text-muted small">
-        © {new Date().getFullYear()} QuickTask - Manage your work smartly
-      </footer>
+        <Route 
+          path="/register" 
+          element={
+            !isAuthenticated ? (
+              <Register onRegister={handleRegister} error={error} />
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          } 
+        />
+        <Route 
+          path="/dashboard" 
+          element={
+            isAuthenticated ? (
+              <Dashboard 
+                tasks={tasks}
+                onAddTask={handleAddTask}
+                onUpdateTask={handleUpdateTask}
+                onDeleteTask={handleDeleteTask}
+                onLogout={handleLogout}
+                error={error}
+              />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
     </div>
   );
 }

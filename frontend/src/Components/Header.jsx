@@ -1,17 +1,44 @@
-import React from 'react';
+import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 export default function Header() {
+  const { user, logout } = useAuth();
+
   return (
-    <header className="bg-gradient-to-r from-blue-600 to-indigo-700 shadow-lg">
-      <div className="container mx-auto px-7 py-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold">QuickTask</h1>
-            <p className="mt-2 opacity-90">Your simple & powerful task manager</p>
-          </div>
-          <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16" />
+    <motion.header
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white shadow-sm"
+    >
+      <div className="container">
+        <div className="d-flex justify-content-between align-items-center py-3">
+          <motion.h1
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="h4 mb-0 text-primary"
+          >
+            QuickTask
+          </motion.h1>
+
+          {user && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="d-flex align-items-center gap-3"
+            >
+              <span className="text-muted">Welcome, {user.name}</span>
+              <motion.button
+                onClick={logout}
+                className="btn btn-outline-danger btn-sm"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Logout
+              </motion.button>
+            </motion.div>
+          )}
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 }
